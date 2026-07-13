@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(cp \"C:\\\\Users\\\\John\\\\Documents\\\\btc-trading-system\\\\charts\\\\comparison_2023_2026\\\\chart1_equity_curves.png\" \"C:\\\\Users\\\\John\\\\Documents\\\\hku-capstone-webpage\\\\assets\\\\chart1_equity_curves.png\")",
+      "Bash(cp \"C:\\\\Users\\\\John\\\\Documents\\\\btc-trading-system\\\\charts\\\\comparison_2023_2026\\\\chart2_annual_returns.png\" \"C:\\\\Users\\\\John\\\\Documents\\\\hku-capstone-webpage\\\\assets\\\\chart2_annual_returns.png\")",
+      "Bash(cp \"C:\\\\Users\\\\John\\\\Documents\\\\btc-trading-system\\\\charts\\\\comparison_2023_2026\\\\chart3_drawdowns.png\" \"C:\\\\Users\\\\John\\\\Documents\\\\hku-capstone-webpage\\\\assets\\\\chart3_drawdowns.png\")",
+      "Bash(cp \"C:\\\\Users\\\\John\\\\Documents\\\\btc-trading-system\\\\charts\\\\comparison_2023_2026\\\\chart4_risk_return_scatter.png\" \"C:\\\\Users\\\\John\\\\Documents\\\\hku-capstone-webpage\\\\assets\\\\chart4_risk_return_scatter.png\")",
+      "Bash(cp \"C:\\\\Users\\\\John\\\\Documents\\\\btc-trading-system\\\\charts\\\\comparison_2023_2026\\\\chart5_monthly_heatmap.png\" \"C:\\\\Users\\\\John\\\\Documents\\\\hku-capstone-webpage\\\\assets\\\\chart5_monthly_heatmap.png\")"
+    ]
+  }
+}
