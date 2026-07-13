@@ -40,7 +40,7 @@
     </section>
 
     <section id="overview" class="section">
-      <div class="section-inner">
+      <div class="section-inner wide">
         <h2>Overview</h2>
         <p class="section-intro">
           Cryptocurrency markets run 24/7 and produce dense, multi-source signals. Existing approaches
@@ -56,19 +56,26 @@
             Design, implement, and evaluate a collaborative agent architecture for BTC/USDT on Binance
             that ingests live market data, technical analysis, and news/social sentiment, then fuses
             them into a final trade recommendation with confidence scores and a full audit trail.
-            Scope is deliberately limited to BTC/USDT spot and paper trading only — no real funds
-            are placed at risk.
+            The system must remain explainable enough for academic evaluation and operational demo —
+            not a single black-box predictor.
           </p>
         </div>
 
         <h3>Problem &amp; gap</h3>
         <p>
-          Prior work falls into rule-based systems (interpretable but brittle under regime change),
-          single-model ML/RL approaches (strong pattern recognition but opaque), and sentiment-augmented
-          predictors. There is limited work that combines real-time multi-source ingestion,
-          specialised reasoning agents, and an explicit consensus layer with risk management in one
-          deployable system. This project fills that gap.
+          Prior work falls into three families: rule-based systems (interpretable but brittle under
+          regime change), single-model ML/RL approaches (strong pattern recognition but opaque), and
+          sentiment-augmented predictors. Recent multi-agent LLM frameworks (AutoGen, CrewAI, LangGraph)
+          show promise for specialised roles, but finance prototypes rarely combine real-time
+          multi-source ingestion, specialised agents, and an explicit consensus / risk layer in one
+          deployable system. This project fills that gap with a production-style prototype.
         </p>
+
+        <h3>Scope</h3>
+        <ul class="bullet-detail">
+          <li><strong>In scope:</strong> BTC/USDT spot on Binance; paper trading only; four core agents (MDA, TAA, STA, TCA); Redis message bus; PostgreSQL audit log; React dashboard; multi-year backtests; SOTA baselines; OCA regime-sizing extension; June–July 2026 daily-signal live test.</li>
+          <li><strong>Out of scope:</strong> real-money trading; multi-asset portfolios; derivatives; high-availability production infra beyond Redis Pub/Sub; regulatory compliance / brokerage integration.</li>
+        </ul>
 
         <ul class="objective-list">
           <li>
@@ -96,33 +103,50 @@
             <span class="obj-id">O4</span>
             <div>
               <strong>Honest comparison</strong>
-              <p>Results positioned against naïve rules, classical TA, multi-year baselines, and a direct local-LLM decision baseline.</p>
+              <p>Results positioned against classical TA, StockBench-style LLM trading, hourly XGBoost forecasting, and agent ablations on matched 2023–2025 windows.</p>
             </div>
           </li>
           <li>
             <span class="obj-id">O5</span>
             <div>
               <strong>Operational demonstration</strong>
-              <p>Live paper-trading dashboard showing decisions, risk-gate outcomes, paired PnL, and portfolio equity.</p>
+              <p>Live paper-trading dashboard plus a June–July 2026 daily-signal live test with lookahead-safe execution.</p>
             </div>
           </li>
+        </ul>
+
+        <h3>Contributions at completion</h3>
+        <ul class="bullet-detail">
+          <li>A working four-agent system with Redis contracts, audit trail, risk-gated paper execution, and a React operations dashboard.</li>
+          <li>An enhanced TCA (adaptive trend overlay + STA soft-risk) that outperforms matched baselines on 2023–2025: <strong>+677.2%</strong> return, Sharpe <strong>2.21</strong>.</li>
+          <li>A closed interim open question on OCA integration: Regime Gate recommended for live sizing; Voter reported as ablation (+763.2% / +806.0%).</li>
+          <li>A SOTA comparison tier (StockBench LLM, multi-horizon forecasting) under a shared evaluation window, plus a 40-day 2026 live-test workflow.</li>
         </ul>
 
         <div class="targets">
           <h3>Performance targets vs outcomes</h3>
           <dl class="target-grid">
             <div><dt>End-to-end latency</dt><dd>&lt; 15 s · met</dd></div>
-            <div><dt>Sharpe ratio (TCA 2025)</dt><dd>1.62 · target &gt; 1.5</dd></div>
-            <div><dt>Max drawdown (TCA 2025)</dt><dd>−3.15% · target &lt; 20%</dd></div>
-            <div><dt>Total return (TCA 2025)</dt><dd>+20.2% vs B&amp;H −7.3%</dd></div>
+            <div><dt>Sharpe ratio (TCA 2023–2025)</dt><dd>2.21 · target &gt; 1.5</dd></div>
+            <div><dt>Max drawdown (TCA 2023–2025)</dt><dd>−23.1% · near &lt; 20% target</dd></div>
+            <div><dt>Total return (TCA 2023–2025)</dt><dd>+677.2% vs B&amp;H +427.5%</dd></div>
           </dl>
         </div>
 
+        <h3>Evaluation protocol (shared assumptions)</h3>
+        <ul class="bullet-detail">
+          <li>Primary window: daily BTC/USDT bars, <strong>2023-01-01 → 2025-12-31</strong>, $10,000 start.</li>
+          <li>Long-only signal-based execution: BUY opens / maintains long; SELL or flat exits; no short selling in the default demo path.</li>
+          <li>Metrics panel: total return, Sharpe, Sortino, max drawdown, average exposure, trade-event count.</li>
+          <li>Baselines and agents are compared on the same calendar window wherever possible (Summary PPT pack).</li>
+          <li>Live test uses a stricter timing rule: decide after completed UTC day D close; execute at D+1 open (lookahead protected).</li>
+        </ul>
+
         <figure class="figure">
-          <img src="assets/equity_tca_vs_agents_2025.png" alt="2025 equity comparison of Buy and Hold, TAA, STA, and TCA" loading="lazy" />
+          <img src="assets/summary_equity_comparison.png" alt="Multi-year backtest equity comparison across Buy and Hold, baselines, TAA, STA, and TCA" loading="lazy" />
           <figcaption>
-            Figure 1 — 2025 equity comparison: integrated TCA (+20.2%, Sharpe 1.62) outperforms Buy &amp; Hold (−7.3%)
-            and the standalone TAA / STA ablations on the same data and fee model.
+            Figure 1 — Final multi-year equity comparison (2023–2025): TCA (+677.2%, Sharpe 2.21) leads Buy &amp; Hold,
+            StockBench LLM, forecasting, TAA, and STA under a shared evaluation window.
           </figcaption>
         </figure>
       </div>
@@ -135,6 +159,8 @@
           Four students developed specialised agents in parallel against shared Pydantic contracts,
           with a single mentor providing academic guidance. Parallel development was a design goal:
           no agent imports another; all communication goes through Redis and validated schemas.
+          Shared contracts in <code>shared/schemas.py</code> and adapter logic in
+          <code>shared/agent_contracts.py</code> kept interfaces stable as agents evolved.
         </p>
 
         <p class="mentor">Mentor — <strong>Ka-Ho Chow</strong></p>
@@ -144,25 +170,25 @@
             <p class="name">LAM Wai Chiu</p>
             <p class="role">Leader · Trade Coordinator Agent (TCA)</p>
             <p class="uid">UID 3036380999</p>
-            <p class="duty">Weighted consensus &amp; risk logic, system integration, project management, final decision audit trail</p>
+            <p class="duty">Adaptive consensus &amp; risk overlays, system integration, project management, audit trail, OCA integration decision, final evaluation narrative</p>
           </li>
           <li>
             <p class="name">YUEN Wai Yin</p>
-            <p class="role">Technical Analyst Agent (TAA)</p>
+            <p class="role">Sentiment Tracker Agent (STA)</p>
             <p class="uid">UID 3036411906</p>
-            <p class="duty">Indicator pipeline, regime classification (trend / range), multi-year TA backtesting vs classical baselines</p>
+            <p class="duty">NLP pipeline (FinBERT), news/social ingestion (X, Reddit, Tavily/GDELT), spam filtering, multi-year sentiment backtests</p>
           </li>
           <li>
             <p class="name">FUNG Wai Ho</p>
-            <p class="role">Sentiment Tracker Agent (STA)</p>
+            <p class="role">Technical Analyst Agent (TAA)</p>
             <p class="uid">UID 3036197433</p>
-            <p class="duty">NLP pipeline (FinBERT), news/social ingestion (X, Reddit, Tavily), sentiment backtests</p>
+            <p class="duty">Indicator pipeline, regime classification (trend / range), multi-year TA backtesting vs classical baselines</p>
           </li>
           <li>
             <p class="name">FAN Man Fei</p>
             <p class="role">Market Data Agent (MDA)</p>
             <p class="uid">UID 3035585413</p>
-            <p class="duty">Live Binance ingestion, Redis/PostgreSQL infrastructure, FastAPI backend &amp; React dashboard</p>
+            <p class="duty">Live Binance ingestion, Redis/PostgreSQL infrastructure, FastAPI backend, React dashboard, live-test UX</p>
           </li>
         </ul>
       </div>
@@ -172,10 +198,19 @@
       <div class="section-inner wide">
         <h2>Architecture</h2>
         <p class="section-intro">
-          Five design principles guide the system: specialisation over generality, audit by construction,
-          decoupling through a message bus, determinism in the decision layer, and parallel development
-          against shared contracts.
+          The runtime topology is a publish/subscribe pipeline: market and sentiment data enter at the top,
+          specialised agents publish typed signals, and TCA emits the final recommendation to logger,
+          paper execution, and the dashboard.
         </p>
+
+        <h3>Design principles</h3>
+        <ul class="bullet-detail">
+          <li><strong>Specialisation over generality</strong> — each agent owns one job and is unaware of others’ internals.</li>
+          <li><strong>Audit by construction</strong> — decisions decompose into upstream signals, confidences, rules, and timestamps.</li>
+          <li><strong>Decoupling through a message bus</strong> — agents communicate only via Redis channels and Pydantic schemas.</li>
+          <li><strong>Determinism in the decision layer</strong> — TCA core logic is pure (no I/O); same inputs → same outputs.</li>
+          <li><strong>Parallel development</strong> — shared contracts let four teammates implement agents concurrently.</li>
+        </ul>
 
         <figure class="figure">
           <img src="assets/architecture_diagram.png" alt="System architecture diagram showing MDA, TAA, STA, TCA and Redis channels" loading="lazy" />
@@ -190,44 +225,120 @@
           <li>
             <strong>MDA — Market Data Agent</strong>
             <p>
-              Subscribes to Binance WebSocket streams (kline, aggTrade, miniTicker) with REST fallback.
-              Emits structured <code>MarketSnapshot</code> messages every ~3 seconds, including price,
-              OHLCV, short-horizon returns, and trigger events (price breakout / drop, volume spike).
+              Subscribes to Binance WebSocket streams (<code>kline_1m</code>, <code>aggTrade</code>, <code>miniTicker</code>)
+              with REST fallback for restricted networks. Every ~3 seconds it publishes a
+              <code>MarketSnapshot</code> with price, OHLCV, 5-minute / 1-hour returns, 24h volume, and
+              trigger events (<code>price_breakout</code>, <code>price_drop</code>, <code>volume_spike</code>).
+              Default triggers: ±1% move over 300s, or volume ≥ 3× trailing mean.
             </p>
           </li>
           <li>
             <strong>TAA — Technical Analyst Agent</strong>
             <p>
               Maintains a rolling OHLCV buffer and computes EMA, RSI, MACD, Bollinger Bands, ATR, and ADX.
-              Classifies regime as TREND_UP / TREND_DOWN / RANGE, then runs either a trend-following voting
-              composite or a gated mean-reversion path. Publishes BUY / SELL / HOLD with confidence,
-              position size, and ATR-based risk levels.
+              Classifies regime as TREND_UP / TREND_DOWN / RANGE (ADX + EMA/SMA heuristics), then runs
+              either a 4-indicator trend-following vote or a gated mean-reversion path (ADX &lt; 20,
+              RSI extreme, narrow Bollinger width). Outputs BUY / SELL / HOLD with confidence,
+              position size, ATR-based stops, and market-context metadata. Long-only mode can map SELL→HOLD
+              while preserving raw direction for audit.
             </p>
           </li>
           <li>
             <strong>STA — Sentiment Tracker Agent</strong>
             <p>
-              Aggregates X/Twitter, Reddit, and Tavily news; scores items with FinBERT (lexicon fallback
-              for CI); applies source-credibility and keyword adjustments; outputs a unified sentiment
-              score on a −10…+10 scale with source breakdown and catalysts.
+              Aggregates X/Twitter, Reddit, Tavily, and (for live-test gaps) GDELT news. Each item is
+              scored with FinBERT (finance-lexicon fallback for CI), then adjusted for source credibility,
+              BTC-specific keywords, spam filters, and engagement when available. Produces a unified score
+              on a −10…+10 scale with source breakdown, catalysts, and rationale. Historical backtests use
+              the packaged daily JSON / analysis files under <code>agents/sta/</code>.
             </p>
           </li>
           <li>
             <strong>TCA — Trade Coordinator Agent</strong>
             <p>
-              Applies freshness checks, confidence floors, conflict handling, and a default 60/40
-              TAA/STA weighted consensus. Emits a final trade signal with rationale and a
-              <code>decision_rules</code> audit array. Pure decision logic is separated from the Redis runtime
-              so it can be unit-tested without infrastructure.
+              Single decision point with freshness checks, confidence floors, and a full
+              <code>decision_rules</code> audit array. The production enhanced path uses adaptive trend
+              overlay <strong>v4/v5</strong>: TAA signal strength for timing, overlay-computed EMAs for trend
+              filter, and STA as a <em>soft-risk</em> overlay (supportive sentiment can maintain exposure;
+              extremely bearish sentiment caps size or supports exits only when technical evidence is also weak).
+              Pure logic lives in <code>agents/tca/decision.py</code>; Redis runtime in <code>agent.py</code>.
             </p>
           </li>
           <li>
-            <strong>OCA — On-Chain Analyst Agent (extension)</strong>
+            <strong>OCA — On-Chain Analyst Agent</strong>
             <p>
-              Beyond the original four-agent scope. Uses free Coin Metrics community data (active-address
-              and transaction-count momentum) as a slower regime signal. Validated in multi-year
-              standalone backtest; recommended integration pattern is as a position-sizing regime gate
-              rather than a directional voter.
+              Free Coin Metrics community metrics: 7d/30d active-address momentum (primary) and
+              transaction-count momentum (confirmation). Mostly quiet (~72% NEUTRAL over 2023–2025),
+              speaking up at regime transitions. Because OCA updates only a few times per year, the
+              preferred live role is sizing modulation (Regime Gate), not competing with TAA/STA on direction.
+            </p>
+          </li>
+        </ul>
+
+        <h3>TCA adaptive overlay (simplified)</h3>
+        <table class="simple-table">
+          <thead>
+            <tr>
+              <th>Rule</th>
+              <th>Condition</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Enter / maintain long</td>
+              <td>TAA <code>signal_strength &gt; −0.20</code> <em>or</em> overlay <code>EMA3 &gt; EMA50</code></td>
+            </tr>
+            <tr>
+              <td>Exit / go flat</td>
+              <td>TAA <code>signal_strength &lt; −0.40</code> <em>and</em> <code>EMA10 &lt; EMA50</code></td>
+            </tr>
+            <tr>
+              <td>STA soft support</td>
+              <td>Supportive STA can help keep exposure when the trend is not bearish</td>
+            </tr>
+            <tr>
+              <td>STA soft risk</td>
+              <td>Extremely bearish STA can cap position (e.g. 0.75×) rather than hard-veto every entry</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>OCA Regime Gate multipliers</h3>
+        <table class="simple-table">
+          <thead>
+            <tr>
+              <th>OCA signal</th>
+              <th>Confidence</th>
+              <th>Multiplier on TCA target position</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>BULLISH</td><td>≥ 0.70</td><td>1.00× (full participation)</td></tr>
+            <tr><td>BULLISH</td><td>&lt; 0.70</td><td>0.85×</td></tr>
+            <tr><td>NEUTRAL</td><td>—</td><td>0.70×</td></tr>
+            <tr><td>BEARISH</td><td>&lt; 0.70</td><td>0.30×</td></tr>
+            <tr><td>BEARISH</td><td>≥ 0.70</td><td>0.00× (force flat / veto new risk)</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Comparison baselines</h3>
+        <ul class="agent-detail">
+          <li>
+            <strong>Classical TA</strong>
+            <p>Buy &amp; Hold, SMA/EMA cross, RSI, MACD, Bollinger, Turtle / Donchian, momentum, volatility targeting — used to benchmark TAA.</p>
+          </li>
+          <li>
+            <strong>StockBench-style LLM baseline</strong>
+            <p>
+              Daily loop: portfolio state → market/news analysis prompt → trade prompt → execution → portfolio update.
+              Uses OHLCV, indicators, memory, and STA sentiment summaries — but <em>not</em> TAA/TCA outputs — so it tests a monolithic LLM alternative.
+            </p>
+          </li>
+          <li>
+            <strong>Forecasting baseline</strong>
+            <p>
+              Hourly multi-horizon XGBoost walk-forward (horizons 1h / 4h / 12h / 24h; best selected: 24h),
+              plus PatchTST experiments. Long-only threshold rules chosen on validation folds.
             </p>
           </li>
         </ul>
@@ -264,15 +375,19 @@
             </tr>
           </tbody>
         </table>
+        <p>
+          Every message carries <code>event_id</code>, <code>correlation_id</code>, and
+          <code>source_event_ids</code>, so a fill can be traced back to the exact market snapshot,
+          TAA signal, and STA reading that produced it.
+        </p>
 
         <h3>Product layer</h3>
-        <p>
-          A contract/adapter layer normalises schemas between agents. An event logger persists every
-          message to PostgreSQL with <code>event_id</code>, <code>correlation_id</code>, and
-          <code>source_event_ids</code> for end-to-end traceability. A risk gate and paper broker simulate
-          fills; FastAPI exposes decisions, orders, fills, and equity; a React dashboard presents the
-          live operations view.
-        </p>
+        <ul class="bullet-detail">
+          <li><strong>Contract/adapter layer</strong> — normalises schema evolutions (e.g. nested <code>TAASignal</code> ↔ flat technical signal).</li>
+          <li><strong>Event logger</strong> — persists all agent and execution channels to PostgreSQL.</li>
+          <li><strong>Risk gate + paper broker</strong> — confidence / age / exposure / daily-loss checks before simulated fills.</li>
+          <li><strong>FastAPI + React</strong> — Command Center, Decision Audit, Execution Monitor, Portfolio, TCA Analytics, System Health, and Live Test.</li>
+        </ul>
 
         <figure class="figure">
           <img src="assets/dashboard_command_center.png" alt="TradeOps AI Command Center live dashboard screenshot" loading="lazy" />
@@ -283,7 +398,7 @@
         </figure>
 
         <p class="stack-note">
-          Stack: Python 3.11 · Redis Pub/Sub · PostgreSQL 16 · Pydantic v2 · FastAPI · React · Docker Compose · FinBERT · Binance API
+          Stack: Python 3.11 · Redis Pub/Sub · PostgreSQL 16 · Pydantic v2 · FastAPI · React · Docker Compose · FinBERT · XGBoost · Ollama / StockBench-style LLM · Binance API · Coin Metrics · GDELT
         </p>
       </div>
     </section>
@@ -293,6 +408,8 @@
         <h2>Milestone</h2>
         <p class="section-intro">
           All planned milestones from the detailed proposal through final delivery have been completed.
+          Rough learning-hour budget from the proposal was ~330 hours across literature, agents,
+          evaluation, reporting, and the project webpage.
         </p>
 
         <ol class="timeline">
@@ -328,12 +445,12 @@
           </li>
           <li>
             <span class="when">By June 2026</span>
-            <span class="what">Interim report and presentation</span>
+            <span class="what">Interim report and presentation (open questions on OCA &amp; SOTA baselines)</span>
             <span class="status done">Completed</span>
           </li>
           <li>
             <span class="when">June–July 2026</span>
-            <span class="what">SOTA / LLM baselines, walk-forward validation, live demo polish</span>
+            <span class="what">Enhanced TCA, StockBench/forecasting baselines, OCA ablation, 2026 live test</span>
             <span class="status done">Completed</span>
           </li>
           <li>
@@ -348,17 +465,17 @@
           <thead>
             <tr>
               <th>Deliverable</th>
+              <th>Content</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td>Detailed project proposal</td><td><span class="tag done">Completed</span></td></tr>
-            <tr><td>Multi-agent BTC trading prototype</td><td><span class="tag done">Completed</span></td></tr>
-            <tr><td>Interim report</td><td><span class="tag done">Completed</span></td></tr>
-            <tr><td>Live paper-trading dashboard</td><td><span class="tag done">Completed</span></td></tr>
-            <tr><td>Backtest &amp; ablation evaluation suite</td><td><span class="tag done">Completed</span></td></tr>
-            <tr><td>Project webpage</td><td><span class="tag done">Completed</span></td></tr>
-            <tr><td>Final report &amp; oral demo</td><td><span class="tag done">Completed</span></td></tr>
+            <tr><td>Detailed proposal</td><td>Objectives, architecture, timeline, learning hours</td><td><span class="tag done">Completed</span></td></tr>
+            <tr><td>Prototype system</td><td>MDA/TAA/STA/TCA + OCA, dashboard, paper execution</td><td><span class="tag done">Completed</span></td></tr>
+            <tr><td>Interim report</td><td>Early results, challenges, revised plan</td><td><span class="tag done">Completed</span></td></tr>
+            <tr><td>Evaluation suite</td><td>Multi-year backtests, SOTA baselines, OCA ablation, live test</td><td><span class="tag done">Completed</span></td></tr>
+            <tr><td>Project webpage</td><td>This site — overview, team, architecture, milestones, progress</td><td><span class="tag done">Completed</span></td></tr>
+            <tr><td>Final report &amp; demo</td><td>Full methodology, results, oral walkthrough</td><td><span class="tag done">Completed</span></td></tr>
           </tbody>
         </table>
       </div>
@@ -369,26 +486,26 @@
         <h2>Progress</h2>
         <p class="section-intro">
           The project is complete. The timeline below follows delivery from infrastructure through
-          agents, integration, evaluation, and final demonstration — with selected result figures
-          at each stage.
+          agents, enhanced TCA, SOTA baselines, OCA integration, and the 2026 daily-signal live test,
+          with method notes and result figures at each stage.
         </p>
 
         <div class="result-highlights">
           <div>
-            <p class="metric">+20.2%</p>
-            <p class="metric-label">Integrated TCA total return (2025)</p>
+            <p class="metric">+677.2%</p>
+            <p class="metric-label">TCA total return (2023–2025)</p>
           </div>
           <div>
-            <p class="metric">1.62</p>
-            <p class="metric-label">TCA Sharpe (2025)</p>
+            <p class="metric">2.21</p>
+            <p class="metric-label">TCA Sharpe (2023–2025)</p>
           </div>
           <div>
-            <p class="metric">−3.15%</p>
-            <p class="metric-label">TCA max drawdown (2025)</p>
+            <p class="metric">+763.2%</p>
+            <p class="metric-label">TCA + OCA Regime Gate</p>
           </div>
           <div>
-            <p class="metric">+221.8%</p>
-            <p class="metric-label">TAA multi-year return (2023–2025)</p>
+            <p class="metric">+806.0%</p>
+            <p class="metric-label">TCA + OCA Voter ablation</p>
           </div>
         </div>
 
@@ -399,8 +516,10 @@
               <p class="pt-when">Phase 1 · Infrastructure</p>
               <h3>Market data &amp; runtime foundation</h3>
               <p>
-                MDA live Binance ingestion (WebSocket with REST fallback), Redis Pub/Sub bus,
-                PostgreSQL persistence, Docker Compose stack, and unit tests for trigger detection.
+                Docker Compose brings up Redis and PostgreSQL. MDA publishes live Binance snapshots with
+                reconnect handling and REST fallback. Shared Pydantic schemas and channel constants let
+                downstream agents develop against stable contracts before the full pipeline was wired.
+                Unit tests cover trigger detection and schema validation.
               </p>
               <p class="pt-status"><span class="tag done">Completed</span></p>
             </div>
@@ -412,14 +531,16 @@
               <p class="pt-when">Phase 2 · Technical analysis</p>
               <h3>TAA agent &amp; classical baselines</h3>
               <p>
-                Regime-aware TAA (EMA, RSI, MACD, Bollinger, ADX) with Redis runtime. Evaluated against
-                classical TA on 2025 data and multi-year (2023–2025) baselines: +221.8% total return,
-                Sharpe 1.38, MaxDD −22.8%, win rate 74.1%.
+                Regime-aware TAA (EMA, RSI, MACD, Bollinger, ADX) with a pure <code>compute_taa_signal()</code>
+                function for reproducible offline backtests and an async Redis runtime for live demos.
+                On the final shared 2023–2025 summary window TAA returns <strong>+249.0%</strong>
+                (Sharpe 1.61, MaxDD −22.3%, avg exposure ~42%). Classical TA strategies on 2025 show
+                wide dispersion (roughly −14% to +19%), motivating ensemble coordination via TCA.
               </p>
               <div class="figure-grid">
                 <figure class="figure">
                   <img src="assets/btc_2025_backtest_report.png" alt="BTC 2025 classical TA strategy comparison dashboard" loading="lazy" />
-                  <figcaption>Figure 4 — Classical TA strategy comparison on BTC 2025.</figcaption>
+                  <figcaption>Figure 4 — Classical TA strategy comparison on BTC 2025 (equity, return, risk, Sharpe / win rate).</figcaption>
                 </figure>
                 <figure class="figure">
                   <img src="assets/taa_trade_signals_2025.png" alt="TAA buy and sell signals overlaid on BTC price in 2025" loading="lazy" />
@@ -428,7 +549,7 @@
               </div>
               <figure class="figure">
                 <img src="assets/chart1_equity_curves.png" alt="Multi-year equity curves for TAA versus six baselines 2023 to 2025" loading="lazy" />
-                <figcaption>Figure 6 — Multi-year equity curves (2023–2025): TAA vs six baselines.</figcaption>
+                <figcaption>Figure 6 — Multi-year equity curves: TAA vs classical baselines.</figcaption>
               </figure>
               <div class="figure-grid">
                 <figure class="figure">
@@ -460,9 +581,11 @@
               <p class="pt-when">Phase 3 · Sentiment analysis</p>
               <h3>STA agent &amp; multi-year sentiment backtest</h3>
               <p>
-                FinBERT scoring over X, Reddit, and news sources, with lexicon fallback for CI.
-                Standalone STA strategies (tiered and extreme allocation) were back-tested across
-                2023–2025 and remain more defensive than Buy &amp; Hold through the late-2025 drawdown.
+                FinBERT scoring over X, Reddit, and news sources, with spam filtering, duplicate removal,
+                credibility tiers, and engagement weighting. Standalone STA on the shared summary window
+                returns <strong>+97.3%</strong> (Sharpe 0.89, MaxDD −25.6%). Tiered (50%/100%) vs extreme
+                allocation rules were also validated across 2023–2025; both stay more defensive than
+                Buy &amp; Hold through the late-2025 drawdown.
               </p>
               <figure class="figure">
                 <img src="assets/sta_strategy_comparison_2023_2025.jpg" alt="STA advanced strategy backtest comparison from 2023 through 2025" loading="lazy" />
@@ -478,53 +601,53 @@
             <div class="pt-marker" aria-hidden="true"></div>
             <div class="pt-body">
               <p class="pt-when">Phase 4 · Coordination</p>
-              <h3>TCA fusion &amp; 2025 ablation results</h3>
+              <h3>Enhanced TCA &amp; multi-year head-to-head</h3>
               <p>
-                Weighted consensus (default 60/40 TAA/STA), freshness and confidence gates, conflict
-                handling, and full audit trail. On 2025 data the integrated TCA returned +20.2%
-                (Sharpe 1.62, MaxDD −3.15%) versus Buy &amp; Hold −7.3%, TAA-only +6.4%, and STA-only +15.4%.
+                Final TCA uses adaptive trend overlay v4/v5 plus STA soft-risk. Earlier hard STA vetoes
+                made the coordinator too conservative; soft capping preserves upside while still reacting
+                to extreme bearish sentiment. On 2023–2025 daily bars ($10K start) TCA returns
+                <strong>+677.2%</strong> with Sharpe <strong>2.21</strong> and MaxDD −23.1%, beating
+                Buy &amp; Hold (+427.5%), StockBench LLM (+278.5%), Forecasting (+291.4%), TAA (+249.0%),
+                and STA (+97.3%). Average exposure ~90.5% — more invested than TAA/STA alone, but with
+                better risk-adjusted return than Buy &amp; Hold.
               </p>
               <table class="simple-table">
                 <thead>
                   <tr>
-                    <th>Strategy (2025)</th>
-                    <th>Total return</th>
-                    <th>Notes</th>
+                    <th>Strategy (2023–2025)</th>
+                    <th>Return</th>
+                    <th>Sharpe</th>
+                    <th>MaxDD</th>
+                    <th>Avg exposure</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>Buy &amp; Hold</td>
-                    <td>−7.3%</td>
-                    <td>Market benchmark</td>
-                  </tr>
-                  <tr>
-                    <td>TAA only</td>
-                    <td>+6.4%</td>
-                    <td>Technical ablation</td>
-                  </tr>
-                  <tr>
-                    <td>STA Strategy 1 (tiered)</td>
-                    <td>+15.4%</td>
-                    <td>Sentiment ablation</td>
-                  </tr>
-                  <tr>
-                    <td>Integrated TCA</td>
-                    <td>+20.2%</td>
-                    <td>Sharpe 1.62 · MaxDD −3.15%</td>
-                  </tr>
+                  <tr><td>Buy &amp; Hold</td><td>+427.5%</td><td>1.59</td><td>−32.0%</td><td>100%</td></tr>
+                  <tr><td>StockBench LLM</td><td>+278.5%</td><td>1.23</td><td>−32.0%</td><td>95.4%</td></tr>
+                  <tr><td>Forecasting (24h)</td><td>+291.4%</td><td>1.93</td><td>−19.7%</td><td>43.4%</td></tr>
+                  <tr><td>TAA</td><td>+249.0%</td><td>1.61</td><td>−22.3%</td><td>42.4%</td></tr>
+                  <tr><td>STA</td><td>+97.3%</td><td>0.89</td><td>−25.6%</td><td>42.5%</td></tr>
+                  <tr><td>TCA</td><td>+677.2%</td><td>2.21</td><td>−23.1%</td><td>90.5%</td></tr>
                 </tbody>
               </table>
+              <figure class="figure">
+                <img src="assets/summary_statistics_table.png" alt="Summary statistics table for all strategies 2023 to 2025" loading="lazy" />
+                <figcaption>Figure 12 — Final summary statistics table (2023–2025).</figcaption>
+              </figure>
               <div class="figure-grid">
                 <figure class="figure">
-                  <img src="assets/equity_tca_vs_agents_2025.png" alt="2025 equity comparison of Buy and Hold, TAA, STA, and TCA" loading="lazy" />
-                  <figcaption>Figure 12 — 2025 equity: TCA vs agent ablations and Buy &amp; Hold.</figcaption>
+                  <img src="assets/summary_equity_comparison.png" alt="Summary equity comparison across all strategies" loading="lazy" />
+                  <figcaption>Figure 13 — Equity comparison across agents and SOTA baselines.</figcaption>
                 </figure>
                 <figure class="figure">
-                  <img src="assets/btc_2025_tca_vs_classic.png" alt="TCA versus classical strategies on 2025 data" loading="lazy" />
-                  <figcaption>Figure 13 — TCA vs classical strategies (2025).</figcaption>
+                  <img src="assets/summary_drawdown_comparison.png" alt="Summary drawdown comparison across strategies" loading="lazy" />
+                  <figcaption>Figure 14 — Drawdown comparison on the same window.</figcaption>
                 </figure>
               </div>
+              <figure class="figure">
+                <img src="assets/tca_enhanced_equity.png" alt="Enhanced TCA equity comparison chart" loading="lazy" />
+                <figcaption>Figure 15 — Enhanced TCA equity comparison artefact.</figcaption>
+              </figure>
               <p class="pt-status"><span class="tag done">Completed</span></p>
             </div>
           </li>
@@ -536,11 +659,14 @@
               <h3>Dashboard, paper execution &amp; audit trail</h3>
               <p>
                 Event logger, risk gate, paper broker, FastAPI backend, and React TradeOps dashboard
-                with correlation IDs from market snapshot through fill.
+                close the loop from research prototype to demonstrable system. Operators can inspect
+                the latest TCA action and confidence, the pass/fail decision rules, risk-gate outcomes
+                (e.g. already-long blocks), paired BUY→SELL PnL, portfolio equity, and agent heartbeats.
+                A dedicated Live Test page supports the daily-signal workflow.
               </p>
               <figure class="figure">
                 <img src="assets/dashboard_command_center.png" alt="TradeOps AI Command Center live dashboard screenshot" loading="lazy" />
-                <figcaption>Figure 14 — Live TradeOps AI Command Center.</figcaption>
+                <figcaption>Figure 16 — Live TradeOps AI Command Center.</figcaption>
               </figure>
               <p class="pt-status"><span class="tag done">Completed</span></p>
             </div>
@@ -549,38 +675,99 @@
           <li>
             <div class="pt-marker" aria-hidden="true"></div>
             <div class="pt-body">
-              <p class="pt-when">Phase 6 · Extensions &amp; validation</p>
-              <h3>OCA, LLM baseline &amp; walk-forward checks</h3>
+              <p class="pt-when">Phase 6 · OCA integration</p>
+              <h3>Regime Gate vs Voter ablation (closes interim open question)</h3>
               <p>
-                On-Chain Analyst Agent prototype compounds to +239% over 2022–2025 (vs Buy &amp; Hold +72.6%),
-                driven mainly by 2022 capital preservation. Direct local-LLM decision baseline,
-                position-sizing experiments, and walk-forward validation artefacts complete the
-                comparison tier.
+                Interim report §7.4 / §10.3 left OCA integration open. The final ablation applies OCA
+                as a backtest overlay on the finalized enhanced TCA (no change to live TCA purity).
+                Both modes improve TCA on 2023–2025: Regime Gate <strong>+763.2%</strong> (Sharpe 2.46);
+                Voter <strong>+806.0%</strong> (Sharpe 2.53). MaxDD widens slightly to −25.6% because both
+                variants participate more in bullish regimes. Recommendation: adopt Regime Gate live
+                (architectural fit for a slow signal); report Voter as comparative ablation.
+              </p>
+              <table class="simple-table">
+                <thead>
+                  <tr>
+                    <th>Strategy (2023–2025)</th>
+                    <th>Total return</th>
+                    <th>Sharpe</th>
+                    <th>MaxDD</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Buy &amp; Hold</td>
+                    <td>+427.5%</td>
+                    <td>1.59</td>
+                    <td>−32.0%</td>
+                  </tr>
+                  <tr>
+                    <td>TCA</td>
+                    <td>+677.2%</td>
+                    <td>2.21</td>
+                    <td>−23.1%</td>
+                  </tr>
+                  <tr>
+                    <td>TCA + OCA Regime Gate</td>
+                    <td>+763.2%</td>
+                    <td>2.46</td>
+                    <td>−25.6%</td>
+                  </tr>
+                  <tr>
+                    <td>TCA + OCA Voter</td>
+                    <td>+806.0%</td>
+                    <td>2.53</td>
+                    <td>−25.6%</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="figure-grid">
+                <figure class="figure">
+                  <img src="assets/tca_with_oca_equity.png" alt="OCA integration ablation equity curves" loading="lazy" />
+                  <figcaption>Figure 17 — OCA integration ablation: TCA vs TCA + OCA variants.</figcaption>
+                </figure>
+                <figure class="figure">
+                  <img src="assets/tca_oca_drawdown.png" alt="Drawdown comparison for OCA integration variants" loading="lazy" />
+                  <figcaption>Figure 18 — Drawdowns for the OCA integration study.</figcaption>
+                </figure>
+              </div>
+              <div class="figure-grid">
+                <figure class="figure">
+                  <img src="assets/oca_cumulative_equity.png" alt="Standalone OCA cumulative equity versus baselines" loading="lazy" />
+                  <figcaption>Figure 19 — Standalone OCA cumulative equity (earlier prototype study, 2022–2025).</figcaption>
+                </figure>
+                <figure class="figure">
+                  <img src="assets/oca_yearly_returns.png" alt="Per-year total returns including standalone OCA" loading="lazy" />
+                  <figcaption>Figure 20 — Standalone OCA per-year returns (strong 2022 capital preservation).</figcaption>
+                </figure>
+              </div>
+              <p class="pt-status"><span class="tag done">Completed</span></p>
+            </div>
+          </li>
+
+          <li>
+            <div class="pt-marker" aria-hidden="true"></div>
+            <div class="pt-body">
+              <p class="pt-when">Phase 7 · Live test (Jun–Jul 2026)</p>
+              <h3>Daily-signal paper live test</h3>
+              <p>
+                Operational check beyond historical backtest. Lookahead-safe daily workflow: generate one
+                signal after completed UTC candle D; execute at the open of D+1. Uses latest TCA
+                (trend_v4 + STA soft-risk). Real-time MDA remains display-only in this mode so live ticks
+                cannot leak into daily decisions. Missing June–July 2026 STA dates are prepared from local
+                archives and GDELT when needed. Window: <strong>2026-06-01 → 2026-07-10</strong> (40 live days,
+                $10K start). Charts below compare TCA against Buy &amp; Hold, TAA, and STA over that period.
               </p>
               <div class="figure-grid">
                 <figure class="figure">
-                  <img src="assets/oca_cumulative_equity.png" alt="OCA cumulative equity versus baselines 2022 to 2025" loading="lazy" />
-                  <figcaption>Figure 15 — OCA cumulative equity vs naïve baselines (2022–2025).</figcaption>
+                  <img src="assets/livetest_equity_2026.png" alt="Daily signal live test equity comparison June to July 2026" loading="lazy" />
+                  <figcaption>Figure 21 — Daily-signal live test equity: TCA vs Buy &amp; Hold, TAA, STA.</figcaption>
                 </figure>
                 <figure class="figure">
-                  <img src="assets/oca_yearly_returns.png" alt="Per-year total returns including OCA 2022 to 2025" loading="lazy" />
-                  <figcaption>Figure 16 — Per-year returns, highlighting OCA’s 2022 downside protection.</figcaption>
+                  <img src="assets/livetest_drawdown_2026.png" alt="Daily signal live test drawdown comparison" loading="lazy" />
+                  <figcaption>Figure 22 — Live-test drawdown comparison over the same window.</figcaption>
                 </figure>
               </div>
-              <div class="figure-grid">
-                <figure class="figure">
-                  <img src="assets/llm_vs_reference_comparison.png" alt="Direct LLM baseline versus reference strategies" loading="lazy" />
-                  <figcaption>Figure 17 — Direct local-LLM decision baseline vs reference strategies.</figcaption>
-                </figure>
-                <figure class="figure">
-                  <img src="assets/walkforward_2026q1.png" alt="Walk-forward validation chart" loading="lazy" />
-                  <figcaption>Figure 18 — Walk-forward validation artefact.</figcaption>
-                </figure>
-              </div>
-              <figure class="figure">
-                <img src="assets/position_sizing_comparison.png" alt="Position sizing comparison chart" loading="lazy" />
-                <figcaption>Figure 19 — Position-sizing comparison experiments.</figcaption>
-              </figure>
               <p class="pt-status"><span class="tag done">Completed</span></p>
             </div>
           </li>
@@ -588,14 +775,17 @@
           <li>
             <div class="pt-marker" aria-hidden="true"></div>
             <div class="pt-body">
-              <p class="pt-when">Phase 7 · Delivery</p>
+              <p class="pt-when">Phase 8 · Delivery</p>
               <h3>Final report, webpage &amp; demonstration</h3>
               <p>
-                Final report, project webpage, and oral demo close the capstone. Key takeaways:
-                specialised agents plus an explicit coordinator improve risk-adjusted 2025 results;
-                auditability is first-class; multi-year evaluation matters across regimes; and the
-                live product layer turns the research prototype into a demonstrable system.
+                Final deliverables close the capstone. Key takeaways:
               </p>
+              <ul class="bullet-detail">
+                <li>Specialised agents plus an explicit coordinator beat matched classical and SOTA baselines on 2023–2025 risk-adjusted return.</li>
+                <li>Soft STA risk overlays work better than hard vetoes for this market regime.</li>
+                <li>OCA Regime Gate is the preferred live sizing integration; Voter remains a documented ablation.</li>
+                <li>Audit IDs and the Live Test dashboard make the system demonstrable end-to-end without real funds.</li>
+              </ul>
               <p class="pt-status"><span class="tag done">Completed</span></p>
             </div>
           </li>
