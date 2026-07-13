@@ -339,7 +339,7 @@ a:hover {
   border-top: 1px solid var(--line);
 }
 
-.agent-detail strong {
+.agent-detail > li > strong {
   display: block;
   color: var(--ink);
   font-size: 1.02rem;

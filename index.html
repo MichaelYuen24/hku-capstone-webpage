@@ -275,18 +275,13 @@
           <li>
             <strong>OCA — On-Chain Analyst Agent  <span class="tag">Beyond scope · backtest-only</span></strong>
             <p>
-              5th prototype agent built from Coin Metrics <em>Community</em> free-tier metrics only — no
-              paid data, so results are reproducible without any commercial API key. Primary signal:
-              7d/30d moving-average ratio of active addresses (<code>AdrActCnt</code>) mapped to
-              {<code>BULLISH</code>, <code>BEARISH</code>, <code>NEUTRAL</code>} with base confidence 0.50–0.80.
-              Confirmation: transaction-count (<code>TxCnt</code>) 7d/30d agrees → +0.10 confidence,
-              disagrees → −0.10. Realized-cap / MVRV is deliberately omitted because it is paid — an
-              explicit reproducibility choice. Over 2023–2025 the signal distribution is
-              <strong>NEUTRAL 71.8% · BEARISH 15.2% · BULLISH 13.0%</strong> — quiet by design, speaking
-              only at genuine regime transitions. Because OCA updates only a few times per year, its
-              intended live role is <em>sizing modulation</em> (Regime Gate), not directional voting
-              alongside TAA/STA. OCA is currently backtest-only and off the live Redis bus; live-bus
-              wiring is documented future work.
+              5th agent built from Coin Metrics <em>Community</em> free-tier metrics (no paid data).
+              Primary signal: 7d/30d moving-average ratio of active addresses (<code>AdrActCnt</code>)
+              mapped to {<code>BULLISH</code>, <code>BEARISH</code>, <code>NEUTRAL</code>};
+              transaction-count (<code>TxCnt</code>) 7d/30d confirmation adjusts confidence by ±0.10.
+              Quiet by design (<strong>NEUTRAL 71.8%</strong> over 2023–2025), so its intended live role
+              is <em>sizing modulation</em> (Regime Gate), not directional voting. Currently backtest-only;
+              live-bus wiring is documented future work.
             </p>
           </li>
         </ul>
@@ -650,23 +645,19 @@
                   <tr><td>TCA</td><td>+677.2%</td><td>2.21</td><td>−23.1%</td><td>90.5%</td></tr>
                 </tbody>
               </table>
-              <figure class="figure">
-                <img src="assets/summary_statistics_table.png" alt="Summary statistics table for all strategies 2023 to 2025" loading="lazy" />
-                <figcaption>Figure 12 — Final summary statistics table (2023–2025).</figcaption>
-              </figure>
               <div class="figure-grid">
                 <figure class="figure">
                   <img src="assets/summary_equity_comparison.png" alt="Summary equity comparison across all strategies" loading="lazy" />
-                  <figcaption>Figure 13 — Equity comparison across agents and SOTA baselines.</figcaption>
+                  <figcaption>Figure 12 — Equity comparison across agents and SOTA baselines.</figcaption>
                 </figure>
                 <figure class="figure">
                   <img src="assets/summary_drawdown_comparison.png" alt="Summary drawdown comparison across strategies" loading="lazy" />
-                  <figcaption>Figure 14 — Drawdown comparison on the same window.</figcaption>
+                  <figcaption>Figure 13 — Drawdown comparison on the same window.</figcaption>
                 </figure>
               </div>
               <figure class="figure">
                 <img src="assets/tca_enhanced_equity.png" alt="Enhanced TCA equity comparison chart" loading="lazy" />
-                <figcaption>Figure 15 — Enhanced TCA equity comparison artefact.</figcaption>
+                <figcaption>Figure 14 — Enhanced TCA equity comparison artefact.</figcaption>
               </figure>
               <p class="pt-status"><span class="tag done">Completed</span></p>
             </div>
@@ -686,7 +677,7 @@
               </p>
               <figure class="figure">
                 <img src="assets/dashboard_command_center.png" alt="TradeOps AI Command Center live dashboard screenshot" loading="lazy" />
-                <figcaption>Figure 16 — Live TradeOps AI Command Center.</figcaption>
+                <figcaption>Figure 15 — Live TradeOps AI Command Center.</figcaption>
               </figure>
               <p class="pt-status"><span class="tag done">Completed</span></p>
             </div>
@@ -699,16 +690,19 @@
               <h3>Regime Gate vs Voter ablation (closes interim open question)</h3>
               <p>
                 Interim report §7.4 / §10.3 left OCA integration open. The final ablation applies OCA
-                as a backtest overlay on the finalized enhanced TCA (no change to live TCA purity).
-                Both modes improve TCA on 2023–2025: Regime Gate <strong>+763.2%</strong> (Sharpe 2.46);
-                Voter <strong>+806.0%</strong> (Sharpe 2.53). MaxDD widens slightly to −25.6% because both
-                variants participate more in bullish regimes; Sortino rises in both cases, confirming the
-                extra drawdown is compensated by upside participation. Standalone OCA is also measured
-                on the same window as a reference — <strong>+327.1%, Sharpe 1.63, MaxDD −22.8%</strong> —
-                beating Buy &amp; Hold on both Sharpe (1.63 vs 1.59) and MaxDD (−22.8% vs −32.0%) despite
-                lower total return, confirming OCA is a legitimate signal on its own, not noise.
-                Recommendation: adopt Regime Gate live (architectural fit for a slow signal); report
-                Voter as comparative ablation.
+                as a backtest overlay on the finalized enhanced TCA — no change to live TCA purity.
+              </p>
+              <p>
+                <strong>Result (2023–2025):</strong> both integration modes lift TCA.
+                Regime Gate reaches <strong>+763.2%</strong> (Sharpe 2.46);
+                Voter reaches <strong>+806.0%</strong> (Sharpe 2.53).
+                Standalone OCA on the same window scores <strong>+327.1%</strong> (Sharpe 1.63,
+                MaxDD −22.8%) — beating Buy &amp; Hold on both Sharpe and MaxDD despite lower total
+                return, confirming OCA is a legitimate signal on its own.
+              </p>
+              <p>
+                <strong>Recommendation:</strong> adopt Regime Gate live (architectural fit for a slow
+                signal); report Voter as comparative ablation.
               </p>
               <table class="simple-table">
                 <thead>
@@ -752,37 +746,41 @@
                   </tr>
                 </tbody>
               </table>
-              <h4>OCA Regime Gate — multiplier robustness validation</h4>
+              <h4>Multiplier robustness validation</h4>
               <p>
-                Because the middle rows of the Regime Gate schedule (0.85 for weak-bullish, 0.70 for
-                neutral, 0.30 for weak-bearish) are hand-tuned rather than optimised, the multiplier
-                vector was stress-tested against three independent checks:
+                The Regime Gate schedule has three hand-tuned middle multipliers (0.85 weak-bullish,
+                0.70 neutral, 0.30 weak-bearish). Two stress tests confirm the result is not brittle:
               </p>
               <ul class="bullet-detail">
                 <li>
-                  <strong>Sensitivity sweep (±0.10).</strong> Every ±0.10 perturbation of every hand-tuned
-                  multiplier keeps the gate strictly above baseline TCA. Sharpe across seven perturbed
-                  runs stays in <strong>2.43–2.49</strong>; Δreturn range <strong>+71 pp to +101 pp</strong>.
-                  The +86 pp headline is not brittle to the exact numbers.
+                  <strong>Sensitivity sweep (±0.10).</strong> Every ±0.10 perturbation of every
+                  hand-tuned multiplier keeps the gate above baseline TCA — Sharpe stays in
+                  <strong>2.43–2.49</strong> across seven perturbed runs (Δreturn +71 pp to +101 pp).
                 </li>
                 <li>
-                  <strong>Regime partition.</strong> The aggregate lift is asymmetric across regimes:
-                  gate loses <strong>−22 pp in 2023</strong> (recovery), wins <strong>+68 pp in 2024</strong>
-                  (bull), and is roughly flat in 2025. Honest framing: OCA Regime Gate is a bull-regime
-                  amplifier over this window, not a universal improvement.
-                </li>
-                <li>
-                  <strong>Minimal-schedule ablation.</strong> A veto-only variant (endpoints only, middle
-                  rows collapsed to 1.00) actually underperforms baseline by 15.6 pp — so the middle rows
-                  do meaningful work. As a byproduct, <code>neutral_mult</code> is dead code on this
-                  dataset because NEUTRAL sits below the <code>min_confidence = 0.55</code> gate; a
-                  documented honest simplification for future work.
+                  <strong>Minimal-schedule ablation.</strong> A veto-only variant (endpoints only,
+                  middle rows collapsed to 1.00) actually <em>under</em>performs baseline by 15.6 pp —
+                  so the middle rows do meaningful work. Byproduct: <code>neutral_mult</code> is dead
+                  code on this dataset (NEUTRAL sits below the <code>min_confidence = 0.55</code> gate).
                 </li>
               </ul>
+              <figure class="figure">
+                <img src="assets/backtest_equity_with_oca.png" alt="Full backtest equity comparison including OCA integration curves" loading="lazy" />
+                <figcaption>
+                  Figure 16 — Full backtest equity comparison (2023–2025): six SOTA / agent baselines
+                  plus the three OCA additions (OCA Only reference, TCA + OCA Regime Gate, TCA + OCA Voter).
+                  Both integration modes sit above TCA baseline; standalone OCA (dashed goldenrod) tracks
+                  Buy &amp; Hold's shape but with lower drawdown.
+                </figcaption>
+              </figure>
               <div class="figure-grid">
                 <figure class="figure">
-                  <img src="assets/tca_with_oca_equity.png" alt="OCA integration ablation equity curves" loading="lazy" />
-                  <figcaption>Figure 17 — OCA integration ablation: TCA vs TCA + OCA variants.</figcaption>
+                  <img src="assets/tca_with_oca_equity.png" alt="OCA integration ablation equity curves with OCA-Only reference" loading="lazy" />
+                  <figcaption>
+                    Figure 17 — OCA integration ablation (2023–2025): TCA baseline vs TCA + OCA Regime
+                    Gate (recommended) and TCA + OCA Voter (best ablation), with OCA Only and Buy &amp; Hold as
+                    reference curves. Legend carries total return and Sharpe for each strategy.
+                  </figcaption>
                 </figure>
                 <figure class="figure">
                   <img src="assets/tca_oca_drawdown.png" alt="Drawdown comparison for OCA integration variants" loading="lazy" />
