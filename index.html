@@ -186,9 +186,9 @@
           </li>
           <li>
             <p class="name">FAN Man Fei</p>
-            <p class="role">Market Data Agent (MDA)</p>
+            <p class="role">Market Data Agent (MDA) · On-Chain Analyst Agent (OCA)</p>
             <p class="uid">UID 3035585413</p>
-            <p class="duty">Live Binance ingestion, Redis/PostgreSQL infrastructure, FastAPI backend, React dashboard, live-test UX</p>
+            <p class="duty">Live Binance ingestion (MDA), Redis/PostgreSQL infrastructure, FastAPI backend, React dashboard, live-test UX; OCA on-chain signal design, integration ablation (Regime Gate / Voter), and multiplier robustness validation</p>
           </li>
         </ul>
       </div>
@@ -226,10 +226,18 @@
             <strong>MDA — Market Data Agent</strong>
             <p>
               Subscribes to Binance WebSocket streams (<code>kline_1m</code>, <code>aggTrade</code>, <code>miniTicker</code>)
-              with REST fallback for restricted networks. Every ~3 seconds it publishes a
-              <code>MarketSnapshot</code> with price, OHLCV, 5-minute / 1-hour returns, 24h volume, and
-              trigger events (<code>price_breakout</code>, <code>price_drop</code>, <code>volume_spike</code>).
-              Default triggers: ±1% move over 300s, or volume ≥ 3× trailing mean.
+              with REST fallback when the socket drops. Every
+              <code>snapshot_interval_s = 3s</code> it publishes a <code>MarketSnapshot</code> with price,
+              OHLCV, <code>price_change_5m</code>, 1-hour returns, 24h volume, and a
+              <code>trigger_event</code> from the enum
+              {<code>NONE</code>, <code>PRICE_BREAKOUT</code>, <code>PRICE_DROP</code>, <code>VOLUME_SPIKE</code>}.
+              Defaults: <strong>±1% price move over 300s</strong> for price triggers;
+              <strong>current 1-min volume ≥ 3× the trailing 30-min mean</strong> (≥ 10 samples) for volume spikes.
+              Trigger detection lives in a pure kernel (<code>agents/mda/trigger.py</code>) with deterministic
+              unit tests. Every snapshot carries <code>event_id</code> + <code>correlation_id</code> for
+              audit lineage, and optional PostgreSQL tick persistence
+              (<code>STORE_TICKS=true</code>) enables full ingest replay. Async I/O with structured logging
+              via <code>structlog</code>.
             </p>
           </li>
           <li>
@@ -265,12 +273,20 @@
             </p>
           </li>
           <li>
-            <strong>OCA — On-Chain Analyst Agent</strong>
+            <strong>OCA — On-Chain Analyst Agent  <span class="tag">Beyond scope · backtest-only</span></strong>
             <p>
-              Free Coin Metrics community metrics: 7d/30d active-address momentum (primary) and
-              transaction-count momentum (confirmation). Mostly quiet (~72% NEUTRAL over 2023–2025),
-              speaking up at regime transitions. Because OCA updates only a few times per year, the
-              preferred live role is sizing modulation (Regime Gate), not competing with TAA/STA on direction.
+              5th prototype agent built from Coin Metrics <em>Community</em> free-tier metrics only — no
+              paid data, so results are reproducible without any commercial API key. Primary signal:
+              7d/30d moving-average ratio of active addresses (<code>AdrActCnt</code>) mapped to
+              {<code>BULLISH</code>, <code>BEARISH</code>, <code>NEUTRAL</code>} with base confidence 0.50–0.80.
+              Confirmation: transaction-count (<code>TxCnt</code>) 7d/30d agrees → +0.10 confidence,
+              disagrees → −0.10. Realized-cap / MVRV is deliberately omitted because it is paid — an
+              explicit reproducibility choice. Over 2023–2025 the signal distribution is
+              <strong>NEUTRAL 71.8% · BEARISH 15.2% · BULLISH 13.0%</strong> — quiet by design, speaking
+              only at genuine regime transitions. Because OCA updates only a few times per year, its
+              intended live role is <em>sizing modulation</em> (Regime Gate), not directional voting
+              alongside TAA/STA. OCA is currently backtest-only and off the live Redis bus; live-bus
+              wiring is documented future work.
             </p>
           </li>
         </ul>
@@ -516,10 +532,14 @@
               <p class="pt-when">Phase 1 · Infrastructure</p>
               <h3>Market data &amp; runtime foundation</h3>
               <p>
-                Docker Compose brings up Redis and PostgreSQL. MDA publishes live Binance snapshots with
-                reconnect handling and REST fallback. Shared Pydantic schemas and channel constants let
-                downstream agents develop against stable contracts before the full pipeline was wired.
-                Unit tests cover trigger detection and schema validation.
+                Docker Compose brings up Redis and PostgreSQL. MDA publishes live Binance snapshots
+                every <code>snapshot_interval_s = 3s</code> with WebSocket-primary + REST fallback,
+                firing <code>PRICE_BREAKOUT</code> / <code>PRICE_DROP</code> at ±1% moves over 300s and
+                <code>VOLUME_SPIKE</code> when current 1-min volume exceeds 3× the trailing 30-min mean.
+                Optional PostgreSQL tick persistence (<code>STORE_TICKS=true</code>) supports full ingest
+                replay. Shared Pydantic v2 schemas and channel constants let downstream agents develop
+                against stable contracts before the full pipeline was wired. Unit tests cover the pure
+                trigger-detection kernel and schema validation.
               </p>
               <p class="pt-status"><span class="tag done">Completed</span></p>
             </div>
@@ -682,8 +702,13 @@
                 as a backtest overlay on the finalized enhanced TCA (no change to live TCA purity).
                 Both modes improve TCA on 2023–2025: Regime Gate <strong>+763.2%</strong> (Sharpe 2.46);
                 Voter <strong>+806.0%</strong> (Sharpe 2.53). MaxDD widens slightly to −25.6% because both
-                variants participate more in bullish regimes. Recommendation: adopt Regime Gate live
-                (architectural fit for a slow signal); report Voter as comparative ablation.
+                variants participate more in bullish regimes; Sortino rises in both cases, confirming the
+                extra drawdown is compensated by upside participation. Standalone OCA is also measured
+                on the same window as a reference — <strong>+327.1%, Sharpe 1.63, MaxDD −22.8%</strong> —
+                beating Buy &amp; Hold on both Sharpe (1.63 vs 1.59) and MaxDD (−22.8% vs −32.0%) despite
+                lower total return, confirming OCA is a legitimate signal on its own, not noise.
+                Recommendation: adopt Regime Gate live (architectural fit for a slow signal); report
+                Voter as comparative ablation.
               </p>
               <table class="simple-table">
                 <thead>
@@ -700,6 +725,12 @@
                     <td>+427.5%</td>
                     <td>1.59</td>
                     <td>−32.0%</td>
+                  </tr>
+                  <tr>
+                    <td>OCA Only (standalone reference)</td>
+                    <td>+327.1%</td>
+                    <td>1.63</td>
+                    <td>−22.8%</td>
                   </tr>
                   <tr>
                     <td>TCA</td>
@@ -721,6 +752,33 @@
                   </tr>
                 </tbody>
               </table>
+              <h4>OCA Regime Gate — multiplier robustness validation</h4>
+              <p>
+                Because the middle rows of the Regime Gate schedule (0.85 for weak-bullish, 0.70 for
+                neutral, 0.30 for weak-bearish) are hand-tuned rather than optimised, the multiplier
+                vector was stress-tested against three independent checks:
+              </p>
+              <ul class="bullet-detail">
+                <li>
+                  <strong>Sensitivity sweep (±0.10).</strong> Every ±0.10 perturbation of every hand-tuned
+                  multiplier keeps the gate strictly above baseline TCA. Sharpe across seven perturbed
+                  runs stays in <strong>2.43–2.49</strong>; Δreturn range <strong>+71 pp to +101 pp</strong>.
+                  The +86 pp headline is not brittle to the exact numbers.
+                </li>
+                <li>
+                  <strong>Regime partition.</strong> The aggregate lift is asymmetric across regimes:
+                  gate loses <strong>−22 pp in 2023</strong> (recovery), wins <strong>+68 pp in 2024</strong>
+                  (bull), and is roughly flat in 2025. Honest framing: OCA Regime Gate is a bull-regime
+                  amplifier over this window, not a universal improvement.
+                </li>
+                <li>
+                  <strong>Minimal-schedule ablation.</strong> A veto-only variant (endpoints only, middle
+                  rows collapsed to 1.00) actually underperforms baseline by 15.6 pp — so the middle rows
+                  do meaningful work. As a byproduct, <code>neutral_mult</code> is dead code on this
+                  dataset because NEUTRAL sits below the <code>min_confidence = 0.55</code> gate; a
+                  documented honest simplification for future work.
+                </li>
+              </ul>
               <div class="figure-grid">
                 <figure class="figure">
                   <img src="assets/tca_with_oca_equity.png" alt="OCA integration ablation equity curves" loading="lazy" />
